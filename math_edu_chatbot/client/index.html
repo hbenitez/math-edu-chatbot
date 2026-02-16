@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Matemático de la Nube</title>
+    <style>
+        :root {
+            --primary-color: #2ecc71;
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --chat-bg: #2d2d2d;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: bold;
+        }
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .message {
+            max-width: 80%;
+            padding: 0.8rem;
+            border-radius: 10px;
+            line-height: 1.4;
+        }
+        .user {
+            align-self: flex-end;
+            background-color: #3498db;
+            color: white;
+        }
+        .bot {
+            align-self: flex-start;
+            background-color: var(--chat-bg);
+        }
+        #input-area {
+            background-color: #252525;
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        input[type="text"] {
+            flex: 1;
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            padding: 0.8rem;
+            border-radius: 5px;
+        }
+        button {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #camera-btn {
+            background-color: #e67e22;
+        }
+        #file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>Guía Matemático de la Nube</header>
+    <div id="chat-container">
+        <div class="message bot">¡Hola! Soy tu guía de matemáticas. ¿En qué problema te gustaría que trabajemos hoy?</div>
+    </div>
+    <div id="input-area">
+        <input type="file" id="file-input" accept="image/*">
+        <button id="camera-btn">📷</button>
+        <input type="text" id="user-input" placeholder="Escribe tu duda aquí...">
+        <button id="send-btn">Enviar</button>
+    </div>
+    <div id="loading" style="display:none; text-align:center; padding: 0.5rem; color: #f1c40f;">
+        El profe está pensando... 🧠
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const cameraBtn = document.getElementById('camera-btn');
+        const fileInput = document.getElementById('file-input');
+        const loading = document.getElementById('loading');
+
+        // Historial de mensajes para mantener el contexto
+        let messages = [];
+
+        function appendMessage(role, content) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role === 'user' ? 'user' : 'bot'}`;
+            msgDiv.innerText = content;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Guardar en el historial (el servidor espera 'role' y 'content')
+            messages.push({ role, content });
+        }
+
+        function setBusy(isBusy) {
+            sendBtn.disabled = isBusy;
+            cameraBtn.disabled = isBusy;
+            userInput.disabled = isBusy;
+            loading.style.display = isBusy ? 'block' : 'none';
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            appendMessage('user', text);
+            userInput.value = '';
+            setBusy(true);
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: messages })
+                });
+                const data = await response.json();
+                appendMessage('assistant', data.response);
+            } catch (err) {
+                appendMessage('assistant', 'Ups, hubo un error conectando con el profe.');
+            } finally {
+                setBusy(false);
+            }
+        }
+
+        sendBtn.onclick = sendMessage;
+        userInput.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+
+        cameraBtn.onclick = () => fileInput.click();
+
+        fileInput.onchange = async () => {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const placeholderText = '[Imagen enviada: ' + file.name + ']';
+                appendMessage('user', placeholderText);
+                setBusy(true);
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                // Enviamos el historial actual como JSON string para que el servidor tenga contexto
+                formData.append('history', JSON.stringify(messages.slice(0, -1))); 
+                formData.append('text', 'Hola profe, ¿me ayudas con el problema de esta imagen? Ayúdame a entender los conceptos paso a paso.');
+
+                try {
+                    const response = await fetch('/api/multimodal', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) throw new Error('Error en servidor');
+                    const data = await response.json();
+                    appendMessage('assistant', data.response);
+                } catch (err) {
+                    appendMessage('assistant', 'No pude procesar la imagen. Asegúrate de que el profe esté encendido y la imagen sea clara.');
+                } finally {
+                    setBusy(false);
+                    fileInput.value = ''; 
+                }
+            }
+        };
+    </script>
+</body>
+</html>
