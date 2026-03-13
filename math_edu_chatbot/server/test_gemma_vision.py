@@ -1,4 +1,4 @@
-import ollama
+import ollama # type:ignore
 import os
 
 def test_multimodal():
