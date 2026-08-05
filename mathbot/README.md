@@ -41,3 +41,11 @@ Ambos scripts lanzan una interfaz web en `http://localhost:7860`.
    ```bash
    pip install -r requirements.txt
    ```
+
+## Despliegue en aula sin Internet
+
+Para usar MathBot en una escuela rural —con la laptop del docente como servidor
+local (Ollama), una red Wi-Fi sin Internet y los teléfonos de los estudiantes como
+clientes— sigue la guía paso a paso:
+
+- 📘 [Guía de despliegue "Classroom Cloud"](docs/deployment-classroom-cloud.md)
