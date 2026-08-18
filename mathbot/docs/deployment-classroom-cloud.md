@@ -90,35 +90,36 @@ ollama list
 
 You should see `llama3.2` and `qwen2.5vl:7b`.
 
-### 2.3 Install Python
+### 2.3 Install uv (manages Python and dependencies)
 
-1. Download **Python 3.10 or newer** from <https://www.python.org/downloads/windows/>.
-2. During installation, **tick "Add python.exe to PATH"**.
-3. Verify:
+**uv** installs the right Python version and all packages for you — no separate
+Python install needed.
+
+1. In **PowerShell**, run the official installer:
 
    ```powershell
-   python --version
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+2. Close and reopen PowerShell, then verify:
+
+   ```powershell
+   uv --version
    ```
 
 ### 2.4 Install MathBot and its Python dependencies
 
 1. Copy the `mathbot` project folder onto the laptop (e.g. `C:\mathbot`).
-2. Open PowerShell in that folder and create a virtual environment:
+2. Open PowerShell in that folder and let uv create the environment and install
+   everything declared in `pyproject.toml` (pinned in `uv.lock`):
 
    ```powershell
    cd C:\mathbot
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+   uv sync
    ```
 
-   > If PowerShell blocks the activation script, run once:
-   > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` and try again.
-
-3. Install the required packages (includes the extras `visual.py` needs):
-
-   ```powershell
-   pip install "gradio>=6.11.0" "langchain>=0.2.0" "langchain-ollama>=0.1.0" ollama pillow
-   ```
+   uv downloads a suitable Python (3.10+) if needed and installs `gradio`,
+   `langchain`, `langchain-ollama`, `ollama` and `pillow` automatically.
 
 > ✅ At the end of Section 2 everything needed is on the laptop. From here on, **no
 > Internet is required**.
@@ -189,13 +190,13 @@ until you open the ports.
 The two apps must run on **different ports** because each one, by default, uses
 `7860`. We keep `text.py` on **7860** and put `visual.py` on **7861**.
 
-Open **two** PowerShell windows, activate the environment in each
-(`.\.venv\Scripts\Activate.ps1`), then:
+Open **two** PowerShell windows in the project folder (`cd C:\mathbot`), then use
+`uv run` (it activates the environment automatically):
 
 ### Terminal 1 — Text tutor (`text.py`)
 
 ```powershell
-python text.py
+uv run text.py
 ```
 
 Serves the text tutor at `http://<laptop-ip>:7860`.
@@ -206,7 +207,7 @@ Override the port with an environment variable (no need to edit the file):
 
 ```powershell
 $env:GRADIO_SERVER_PORT = "7861"
-python visual.py
+uv run visual.py
 ```
 
 Serves the image tutor at `http://<laptop-ip>:7861`.
@@ -260,9 +261,9 @@ Once everything is installed, a normal class only needs:
 1. ☐ Turn on the router / phone hotspot.
 2. ☐ Connect the laptop to that Wi‑Fi.
 3. ☐ Confirm the laptop's IP with `ipconfig` (write it on the board).
-4. ☐ Open PowerShell → `cd C:\mathbot` → `.\.venv\Scripts\Activate.ps1`.
-5. ☐ `python text.py`  (Terminal 1).
-6. ☐ `$env:GRADIO_SERVER_PORT="7861"; python visual.py`  (Terminal 2, optional).
+4. ☐ Open PowerShell → `cd C:\mathbot`.
+5. ☐ `uv run text.py`  (Terminal 1).
+6. ☐ `$env:GRADIO_SERVER_PORT="7861"; uv run visual.py`  (Terminal 2, optional).
 7. ☐ Students open `http://<ip>:7860` (and `:7861`) in Chrome.
 
 To stop a server, press **Ctrl + C** in its terminal.
@@ -275,11 +276,11 @@ To stop a server, press **Ctrl + C** in its terminal.
 |---------|--------------|-----|
 | Phone browser says "can't connect / site not reachable" | Firewall blocking, or wrong IP | Re‑check `ipconfig`; confirm the firewall rules in §3.2; ensure phone is on the same Wi‑Fi |
 | Works on the laptop's own browser but not on phones | Phone is on a different network, or hotspot "client isolation" | Reconnect the phone to the same Wi‑Fi; switch to a router (Option A) |
-| `Cannot find empty port ... 7860` when starting the 2nd app | Both apps trying to use 7860 | Set `$env:GRADIO_SERVER_PORT="7861"` before `python visual.py` |
+| `Cannot find empty port ... 7860` when starting the 2nd app | Both apps trying to use 7860 | Set `$env:GRADIO_SERVER_PORT="7861"` before `uv run visual.py` |
 | Visual tutor shows "Error … Verifica que Ollama esté corriendo" | Ollama service not running, or model missing | Run `ollama list`; if empty, `ollama pull qwen2.5vl:7b`; restart the laptop so the Ollama service starts |
 | Answers are very slow | First request loads the model into RAM | The first question per model is slow (~20–30 s); later ones are faster. 40 GB RAM easily holds both models |
 | The IP changed the next day | Router/hotspot gave a new address (DHCP) | Re‑run `ipconfig` each session, or set a static IP / DHCP reservation for the laptop |
-| PowerShell won't run `Activate.ps1` | Execution policy | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| PowerShell blocks a script (e.g. the uv installer) | Execution policy | Run once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 
 ---
 
