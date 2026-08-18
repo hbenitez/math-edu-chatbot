@@ -42,10 +42,14 @@ Ambos scripts lanzan una interfaz web en `http://localhost:7860`.
    pip install -r requirements.txt
    ```
 
-## Despliegue en aula sin Internet
+## Documentación
 
-Para usar MathBot en una escuela rural —con la laptop del docente como servidor
-local (Ollama), una red Wi-Fi sin Internet y los teléfonos de los estudiantes como
-clientes— sigue la guía paso a paso:
-
-- 📘 [Guía de despliegue "Classroom Cloud"](docs/deployment-classroom-cloud.md)
+- 📘 **[Guía de despliegue "Classroom Cloud"](docs/deployment-classroom-cloud.md)** —
+  cómo usar MathBot en una escuela rural: la laptop del docente como servidor local
+  (Ollama), una red Wi-Fi sin Internet y los teléfonos de los estudiantes como clientes.
+- 🔎 **[Enfoques para mejorar la tutoría socrática](docs/socratic-tutor-improvement-approaches.md)** —
+  análisis de las fallas del tutor con modelos pequeños y tres soluciones
+  complementarias (pipeline con verificador, RLHF/DPO y destilación).
+- 🛠️ **[Plan de implementación del Enfoque 1 (LangGraph)](docs/approach1-langgraph-implementation-plan.md)** —
+  plan detallado para reconstruir el tutor como un pipeline de agentes en LangGraph
+  con un verificador determinista (SymPy).
