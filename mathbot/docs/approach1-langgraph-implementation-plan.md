@@ -183,6 +183,44 @@ g.add_edge("tutor", END)
 graph = g.compile(checkpointer=MemorySaver())
 ```
 
+### Graph diagram
+
+```mermaid
+flowchart TD
+    START([START]) -->|has_image: image| intake_vision["intake_vision<br/>(qwen2.5vl:7b — OCR)"]
+    START -->|has_image: text| classify["classify<br/>(llama3.2)"]
+    intake_vision --> classify
+    classify --> solve["solve<br/>(SymPy — no LLM)"]
+
+    solve -->|ok| plan["plan<br/>(llama3.2)"]
+    solve -->|unparseable| tutor["tutor<br/>(llama3.2 — phrases reply)"]
+    plan --> tutor
+
+    %% Subsequent turns resume at grade via the checkpointer
+    turn(["next student turn<br/>(resume via checkpointer)"]) --> grade["grade<br/>(llama3.2 + SymPy compare)"]
+    grade -->|correct| advance_step["advance_step<br/>(pure Python)"]
+    grade -->|partial| hint["hint<br/>(llama3.2)"]
+    grade -->|wrong| hint
+    grade -->|pushback| guardrail["guardrail<br/>(hold truth, re-guide)"]
+
+    advance_step -->|more| tutor
+    advance_step -->|done| tutor
+    hint --> tutor
+    guardrail --> tutor
+    tutor --> ENDN([END])
+
+    classDef tool fill:#e6f4ea,stroke:#34a853,color:#0b3d1e;
+    classDef llm fill:#e8f0fe,stroke:#4285f4,color:#0b2a5b;
+    classDef ctrl fill:#fef7e0,stroke:#f9ab00,color:#5b4300;
+    class solve,advance_step tool;
+    class intake_vision,classify,plan,grade,hint,guardrail,tutor llm;
+    class START,ENDN,turn ctrl;
+```
+
+> Green = deterministic (no LLM); blue = an `llama3.2` / `qwen2.5vl` call;
+> amber = control points. Note that `solve` and `advance_step` never call a model,
+> and `grade` uses SymPy for the actual judgement.
+
 - **Entry routing per turn:** first message → `START`; later messages →
   `grade` (the runtime uses the checkpointer to resume state). We implement this
   by branching on whether `socratic_questions` already exists.
