@@ -2,6 +2,10 @@
 
 An offline-first educational chatbot designed for rural Colombia. It uses local AI to guide students through mathematical problems using the Socratic method, focusing on pedagogical identification rather than direct answers.
 
+> 📦 **MathBot moved.** The standalone Gradio tutors (`text.py` / `visual.py`) that
+> used to live under `mathbot/` are now their own MIT-licensed repository:
+> **https://github.com/hbenitez/mathbot**
+
 ## 🚀 Installation
 
 ### Prerequisites
